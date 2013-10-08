@@ -1,0 +1,68 @@
+
+--server side
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Mvc;
+
+namespace Exam.Models
+{
+    public class ShouldNotContainBugAttribute : ValidationAttribute, IClientValidatable
+    {
+        public override bool IsValid(object value)
+        {
+            string valueAsString = value as string;
+            if (valueAsString == null)
+            {
+                return false;
+            }
+
+            bool containsBug = valueAsString.ToLower().Contains("bug");
+
+            if (containsBug)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public IEnumerable<ModelClientValidationRule> GetClientValidationRules(ModelMetadata metadata, ControllerContext context)
+        {
+            yield return new ModelClientValidationRule
+            {
+                ErrorMessage = this.ErrorMessage,
+                ValidationType = "shouldnotcontainbug"
+            };
+        }
+    }
+}
+
+client side
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        jQuery.validator.addMethod('containsBug', function (value, element, params) {
+            var containsBug = value.toLowerCase().indexOf("bug") != -1;
+
+            if (containsBug) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }, '');
+
+        // and an unobtrusive adapter
+        jQuery.validator.unobtrusive.adapters.add('shouldnotcontainbug', {}, function (options) {
+            options.rules['containsBug'] = true;
+            options.messages['containsBug'] = options.message;
+        });
+    </script>
+}
